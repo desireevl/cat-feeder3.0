@@ -18,7 +18,7 @@
   "bugs": {
     "url": "https://github.com/desireevl/cat-feeder3.0/issues"
   },
-  "homepage": "https://github.com/desireevl/cat-feeder3.0#readme",
+  "homepage": "https://desireevl.github.io/cat-feeder3.0",
   "dependencies": {
     "echarts": "^4.1.0",
     "echarts-for-react": "^2.0.14",
