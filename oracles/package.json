@@ -22,10 +22,11 @@
   "dependencies": {
     "ganache-cli": "^6.1.8",
     "mocha": "^5.2.0",
-    "solc": "^0.4.24",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-scripts": "1.1.5",
+    "solc": "^0.4.24",
+    "truffle-contract": "^3.0.6",
     "truffle-hdwallet-provider": "0.0.6",
     "web3": "^1.0.0-beta.35"
   },
