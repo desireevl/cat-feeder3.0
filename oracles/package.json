@@ -1,0 +1,39 @@
+{
+  "name": "cat-feeder3.0",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/desireevl/cat-feeder3.0.git"
+  },
+  "author": "Kendrick Tan <me@kndrck.co>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/desireevl/cat-feeder3.0/issues"
+  },
+  "homepage": "https://github.com/desireevl/cat-feeder3.0#readme",
+  "dependencies": {
+    "ganache-cli": "^6.1.8",
+    "mocha": "^5.2.0",
+    "react": "^16.4.2",
+    "react-dom": "^16.4.2",
+    "react-scripts": "1.1.5",
+    "solc": "^0.4.24",
+    "truffle-contract": "^3.0.6",
+    "truffle-hdwallet-provider": "0.0.6",
+    "web3": "^1.0.0-beta.35"
+  },
+  "standard": {
+    "parser": "babel-eslint"
+  },
+  "devDependencies": {
+    "babel-eslint": "^9.0.0"
+  }
+}
