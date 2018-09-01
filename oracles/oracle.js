@@ -1,3 +1,6 @@
+const util = require('util')
+const exec = util.promisify(require('child_process').exec)
+
 const Web3 = require('web3')
 const ABI = require('./compiled_contracts/abi.json')
 
@@ -29,9 +32,10 @@ contract
 
     try {
       if (retValues.addr.toLowerCase() === MonitoringAddress.toLowerCase()) {
-        console.log('Fed!')
+        console.log('Feeding time!')
+        exec(`python ../hardware/motor.py`)
       }
     } catch (e) {
-
+      console.log(e)
     }
   })
