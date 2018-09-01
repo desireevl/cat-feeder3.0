@@ -7,7 +7,7 @@ import './App.css'
 import getWeb3 from './utils/getWeb3'
 import abi from './compiled_contracts/abi.json'
 
-const MISO_TOKEN_ADDRESS = '0xF0287086B4Ee10d109052cCBB0e377D81ED7698C'
+const ContractAddress = '0xA086AD99f345cf9EA67552f0DcFbbf17A1EFEb1e'
 
 class FeedingChart extends Component {
   shouldComponentUpdate = (nextProps, nextState) => {
@@ -88,7 +88,7 @@ class App extends Component {
       const accounts = await web3.eth.getAccounts();
 
       // Get the contract instance.
-      const contract = new web3.eth.Contract(abi, MISO_TOKEN_ADDRESS)
+      const contract = new web3.eth.Contract(abi, ContractAddress)
       contract.setProvider(web3.currentProvider);
 
       // Set web3, accounts, and contract to the state, and then proceed with an
@@ -120,11 +120,15 @@ class App extends Component {
       .call()
 
     const feedHistory = await contract.methods
-      .getFeedingHistory()
+      .getFeedingHistory(from)
       .call()
 
     const blocksTillClaim = await contract.methods
-      .getBlocksTillClaimable()
+      .getBlocksTillClaimable(from)
+      .call()
+    
+    const claimableTokens = await contract.methods
+      .getClaimableTokens(from)
       .call()
     
     const blocksPerClaim = await contract.methods
@@ -138,14 +142,6 @@ class App extends Component {
     const dailyTokensNo = await contract.methods
       .getDailyTokensNo()
       .call()
-
-    const claimableTokens = await contract.methods
-      .getClaimableTokens()
-      .call()
-
-    web3.eth.getBlockNumber((err, res) => {
-      console.log('block number ' + res)
-    })
 
     this.setState({
       balance,
@@ -164,7 +160,7 @@ class App extends Component {
 
     contract.methods
       .claim()
-      .send({from})
+      .send({ gas: '4712388', from })
       .then((x) => {
         this.syncDappData()
       })
@@ -176,7 +172,7 @@ class App extends Component {
 
     contract.methods
       .feed()
-      .send({from})
+      .send({ gas: '4712388', from })
       .then((x) => {
         this.syncDappData()
       })
@@ -184,8 +180,6 @@ class App extends Component {
 
   render () {
     const { claimableTokens, tokensPerFeed, dailyTokensNo, blocksPerClaim, balance, feedHistory, blocksTillClaim, accounts, selectedAccountIndex } = this.state
-
-    console.log(feedHistory)
 
     if (accounts.length <= 0) {
       return (

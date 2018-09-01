@@ -1,8 +1,8 @@
 const Web3 = require('web3')
 const ABI = require('./compiled_contracts/abi.json')
 
-const ContractAddress = '0x9AE483271A6215Ff32771eb684A07017b65e1C1F'
-const MonitoringAddress = '0xAa9d9cd65C08e1aBAd33AF8f8A13A9D7Ec7D117E'
+const ContractAddress = '0xA086AD99f345cf9EA67552f0DcFbbf17A1EFEb1e'
+const MonitoringAddress = '0x2007a3FA09d42F739ac8D2B58fEc70fE3197A473'
 
 const web3 = new Web3(new Web3.providers.WebsocketProvider('wss://rinkeby.infura.io/ws'))
 // const web3 = new Web3(new Web3.providers.WebsocketProvider('ws://localhost:8545'))

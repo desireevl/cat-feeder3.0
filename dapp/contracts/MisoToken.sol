@@ -31,7 +31,7 @@ contract MisoToken is BaseToken {
     mapping (address => uint[]) feedingHistory;
 
     // How many blocks before you can claim tokens
-    uint public blocksPerClaim = 5;
+    uint public blocksPerClaim = 100;
 
     // Callback function everytime someone feeds an address
     // https://solidity.readthedocs.io/en/v0.4.21/contracts.html#events
@@ -56,26 +56,26 @@ contract MisoToken is BaseToken {
         blocksPerClaim = newB;
     }
 
-    function getBlocksTillClaimable() public view returns (uint blockNo) {
-        if (lastClaimed[msg.sender] == 0) {
+    function getBlocksTillClaimable(address addr) public view returns (uint blockNo) {
+        if (lastClaimed[addr] == 0) {
             return 0;
         }
 
-        uint blockDif = (block.number - lastClaimed[msg.sender] - 1);
+        uint blockDif = (block.number - lastClaimed[addr] - 1);
         
-        if (blockDif >= blocksPerClaim) {
-            return 0;
+        if (blockDif < blocksPerClaim) {
+            return blocksPerClaim.sub(blockDif);
         }
 
-        return blockDif;
+        return 0;
     }
 
-    function getLastClaimBlock() public view returns (uint blockNo) {
-        return lastClaimed[msg.sender];
+    function getLastClaimBlock(address addr) public view returns (uint blockNo) {
+        return lastClaimed[addr];
     }
 
-    function getFeedingHistory () public view returns (uint[]) {
-        return feedingHistory[msg.sender];
+    function getFeedingHistory (address addr) public view returns (uint[]) {
+        return feedingHistory[addr];
     }
 
     function getBlocksPerClaim () public view returns (uint) {
@@ -90,15 +90,15 @@ contract MisoToken is BaseToken {
         return dailyTokens;
     }
 
-    function getClaimableTokens () public view returns (uint) {
+    function getClaimableTokens (address addr) public view returns (uint) {
         uint value;
 
-        if (lastClaimed[msg.sender] == 0) {
+        if (lastClaimed[addr] == 0) {
             // Initial claim = set to current block number            
             value = dailyTokens;
         } else {
             // How many mutiples of food
-            uint multiples = (block.number - lastClaimed[msg.sender] - 1).div(blocksPerClaim);
+            uint multiples = (block.number - lastClaimed[addr] - 1).div(blocksPerClaim);
             value = multiples * dailyTokens;
         }
 
