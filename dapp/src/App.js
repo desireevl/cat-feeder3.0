@@ -15,7 +15,7 @@ class FeedingChart extends Component {
   }
 
   render () {
-    const { feedHistory } = this.props
+    const { feedHistory, latestBlockNo } = this.props
 
     if (feedHistory.length <= 0) {
       return (
@@ -30,8 +30,8 @@ class FeedingChart extends Component {
       acc[i] = 1
       return acc
     }, {})
-    const startInt = feedHistoryInt[0] - 1
-    const endInt = feedHistoryInt[feedHistory.length - 1] + 1
+    const startInt = latestBlockNo - 101
+    const endInt = latestBlockNo
 
     const xAxis = Array(endInt - startInt).fill(0).map((_, idx) => idx + startInt)
     const seriesData = xAxis.map((x) => {
@@ -76,7 +76,8 @@ class App extends Component {
     feedHistory: [],
     blocksPerClaim: 0,
     tokensPerFeed: 0,
-    dailyTokensNo: 0
+    dailyTokensNo: 0,
+    latestBlockNo: 0,
   }
 
   componentDidMount = async () => {
@@ -142,6 +143,8 @@ class App extends Component {
     const dailyTokensNo = await contract.methods
       .getDailyTokensNo()
       .call()
+    
+    const latestBlockNo = await web3.eth.getBlockNumber()
 
     this.setState({
       balance,
@@ -150,7 +153,8 @@ class App extends Component {
       blocksTillClaim,
       blocksPerClaim,
       tokensPerFeed,
-      dailyTokensNo
+      dailyTokensNo,
+      latestBlockNo
     })
   }
 
@@ -179,7 +183,7 @@ class App extends Component {
   }
 
   render () {
-    const { claimableTokens, tokensPerFeed, dailyTokensNo, blocksPerClaim, balance, feedHistory, blocksTillClaim, accounts, selectedAccountIndex } = this.state
+    const { claimableTokens, latestBlockNo, tokensPerFeed, dailyTokensNo, blocksPerClaim, balance, feedHistory, blocksTillClaim, accounts, selectedAccountIndex } = this.state
 
     if (accounts.length <= 0) {
       return (
@@ -226,7 +230,7 @@ class App extends Component {
 
         <Row center='xs'>
           <Col xs={12}>
-            <FeedingChart feedHistory={feedHistory}/>
+            <FeedingChart feedHistory={feedHistory} latestBlockNo={latestBlockNo}/>
           </Col>
         </Row>
       </Grid>
