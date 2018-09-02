@@ -11,7 +11,7 @@ const ContractAddress = '0xA086AD99f345cf9EA67552f0DcFbbf17A1EFEb1e'
 
 class FeedingChart extends Component {
   shouldComponentUpdate = (nextProps, nextState) => {
-    return JSON.stringify(nextProps.feedHistory) !== JSON.stringify(this.props.feedHistory)
+    return JSON.stringify(nextProps.feedHistory) !== JSON.stringify(this.props.feedHistory) || nextProps.latestBlockNo !== this.props.latestBlockNo
   }
 
   render () {
