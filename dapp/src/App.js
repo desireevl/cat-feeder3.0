@@ -4,6 +4,7 @@ import ReactEcharts from 'echarts-for-react';
 import { Grid, Row, Col } from 'react-flexbox-grid'
 
 import './App.css'
+import 'milligram'
 import getWeb3 from './utils/getWeb3'
 import abi from './compiled_contracts/abi.json'
 
@@ -11,11 +12,11 @@ const ContractAddress = '0xA086AD99f345cf9EA67552f0DcFbbf17A1EFEb1e'
 
 class FeedingChart extends Component {
   shouldComponentUpdate = (nextProps, nextState) => {
-    return JSON.stringify(nextProps.feedHistory) !== JSON.stringify(this.props.feedHistory)
+    return JSON.stringify(nextProps.feedHistory) !== JSON.stringify(this.props.feedHistory) || nextProps.latestBlockNo !== this.props.latestBlockNo
   }
 
   render () {
-    const { feedHistory } = this.props
+    const { feedHistory, latestBlockNo } = this.props
 
     if (feedHistory.length <= 0) {
       return (
@@ -26,33 +27,63 @@ class FeedingChart extends Component {
     }
 
     const feedHistoryInt = feedHistory.map((x) => parseInt(x, 10))
-    const feedHistoryDict = feedHistoryInt.reduce((acc, i) => {
-      acc[i] = 1
-      return acc
-    }, {})
-    const startInt = feedHistoryInt[0] - 1
-    const endInt = feedHistoryInt[feedHistory.length - 1] + 1
 
-    const xAxis = Array(endInt - startInt).fill(0).map((_, idx) => idx + startInt)
-    const seriesData = xAxis.map((x) => {
-      return feedHistoryDict[x] || 0
+    // Get last 6 hours
+    const sixHours = 1000 * 60 * 60 * 6
+    const endTime = new Date().getTime()
+    const startTime = endTime - sixHours // 6 hours prior
+
+    // Assume each block is 15 seconds
+    const blockInterval = 15 * 1000    
+    const startBlock = latestBlockNo - (sixHours / blockInterval)
+
+    // Each data interval is 5 minutes
+    const timeInterval = 60 * 1000 * 5
+
+    let seriesData = []
+
+    for (let i = startTime; i < endTime; i += timeInterval) {
+      const now = new Date(i)
+      seriesData.push({
+        name: now.toString(),
+        value: [
+          [now.getHours(), (now.getMinutes() + '').padStart(2, '0')].join(':'),
+          0
+        ]
+      })
+    }
+
+    feedHistoryInt.forEach((x) => {
+      const blockDif = x - startBlock
+      const dataIndex = Math.floor(blockDif / 20)
+
+      if (blockDif > 0 && seriesData[dataIndex] !== undefined){
+        seriesData[dataIndex].value[1] = 1
+      }
     })
 
+    const xAxisdata = seriesData.map(x => x.value[0])
+    const yAxisdata = seriesData.map(x => x.value[1])
+
+    
     const option = {
       xAxis: {
         type: 'category',
-        data: xAxis,
-        name: 'Block No'
+        data: xAxisdata,
+        splitLine: {
+          show: false
+        },
+        name: 'Time'
       },
       yAxis: {
-        name: 'Feed (Yes: 1, No: 0)',
+        name: 'Fed',
         type: 'value'
       },
       tooltip: {
         trigger: 'axis'
       },
       series: [{
-        data: seriesData,
+        data: yAxisdata,
         type: 'line',
         step: 'middle'
       }]
@@ -68,6 +99,8 @@ class FeedingChart extends Component {
 
 class App extends Component {
   state = {
+    web3GetError: false,
+    web3InvalidNetwork: false,
     accounts: [],
     claimableTokens: 0,
     selectedAccountIndex: 0,
@@ -76,7 +109,8 @@ class App extends Component {
     feedHistory: [],
     blocksPerClaim: 0,
     tokensPerFeed: 0,
-    dailyTokensNo: 0
+    dailyTokensNo: 0,
+    latestBlockNo: 0,
   }
 
   componentDidMount = async () => {
@@ -91,9 +125,14 @@ class App extends Component {
       const contract = new web3.eth.Contract(abi, ContractAddress)
       contract.setProvider(web3.currentProvider);
 
+      // Get network type
+      const networkType = await web3.eth.net.getNetworkType()
+
+      const web3InvalidNetwork = networkType !== 'rinkeby'
+
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
-      this.setState({ web3, accounts, contract }, this.syncDappData);
+      this.setState({ web3, accounts, contract, web3InvalidNetwork }, this.syncDappData);
 
       // Auto sync data every second
       this.interval = setInterval(() => this.syncDappData(), 1000);
@@ -103,6 +142,9 @@ class App extends Component {
       alert(
         `Failed to load web3, accounts, or contract. Check console for details.`
       );
+      this.setState({
+        web3GetError: true
+      })
       console.log(error);
     }
   }
@@ -142,6 +184,8 @@ class App extends Component {
     const dailyTokensNo = await contract.methods
       .getDailyTokensNo()
       .call()
+    
+    const latestBlockNo = await web3.eth.getBlockNumber()
 
     this.setState({
       balance,
@@ -150,7 +194,8 @@ class App extends Component {
       blocksTillClaim,
       blocksPerClaim,
       tokensPerFeed,
-      dailyTokensNo
+      dailyTokensNo,
+      latestBlockNo
     })
   }
 
@@ -179,9 +224,10 @@ class App extends Component {
   }
 
   render () {
-    const { claimableTokens, tokensPerFeed, dailyTokensNo, blocksPerClaim, balance, feedHistory, blocksTillClaim, accounts, selectedAccountIndex } = this.state
+    const { web3GetError, web3InvalidNetwork, claimableTokens, latestBlockNo, tokensPerFeed, dailyTokensNo, blocksPerClaim, balance, feedHistory, blocksTillClaim, accounts, selectedAccountIndex } = this.state
+    const address = accounts[selectedAccountIndex]
 
-    if (accounts.length <= 0) {
+    if (accounts.length <= 0 && !web3GetError && !web3InvalidNetwork) {
       return (
         <Grid>
           <Row center='xs'>
@@ -191,42 +237,78 @@ class App extends Component {
       )
     }
 
+    if (web3GetError) {
+      return (
+        <Grid>
+          <Row center='xs'>
+            Unable to get web3. Make sure you have metamask installed if you're using chrome/firefox. If not use brave browser.
+          </Row>
+        </Grid>
+      )
+    }
+
+    if (web3InvalidNetwork) {
+      return (
+        <Grid>
+          <Row center='xs'>
+            Cat Feeder has only been deployed to Rinkeby network. Please change to the Rinkeby network and refresh.
+          </Row>
+        </Grid>
+      )
+    }
+
     return (
       <Grid>
+        <Row center='xs' middle='xs' style={{height: '42px', backgroundColor: '#dfe4ea', borderRadius: '5px'}}>
+          <Col xs={12}>
+            Network: <strong>Rinkeby</strong>&nbsp;|&nbsp;
+            Blocks/claim: <strong>{blocksPerClaim}</strong>&nbsp;|&nbsp;
+            Tokens/claim: <strong>{dailyTokensNo}</strong>&nbsp;|&nbsp;
+            Tokens/feed: <strong>{tokensPerFeed}</strong>&nbsp;
+          </Col>
+        </Row>
+        <br/><br/>
         <Row center='xs'>
           <Col xs={8}>
             <Blockies
-              seed={accounts[selectedAccountIndex]}
+              seed={address}
               size={25}
-            /> <br/> <br/>
-            {accounts[selectedAccountIndex]}<br/><br/>
+            />
+            
+            <br/><br/>
 
-            Miso Token Balance: <strong>{balance}</strong><br/>
-            Blocks Till Next Claim: <strong>{blocksTillClaim}</strong><br/>
-            Claimable Tokens: <strong>{claimableTokens}</strong><br/><br/>
+            <h5><a href={'https://rinkeby.etherscan.io/address/'+address}>{address}</a></h5>
+
+            <table>
+              <tbody>
+                <tr>
+                  <td>Balance</td>
+                  <td>{balance}</td>
+                </tr>
+                <tr>
+                  <td>Blocks Till Next Claim</td>
+                  <td>{blocksTillClaim}</td>
+                </tr>
+                <tr>
+                  <td>Claimable Tokens</td>
+                  <td>{claimableTokens}</td>
+                </tr>
+              </tbody>
+            </table>
 
             <button onClick={this.feed}>
               Feed
             </button>
             &nbsp;
             <button onClick={this.claimMisoTokens}>
-              Claim daily tokens
+              Claim tokens
             </button>            
-          </Col>
-          <Col xs={4}>
-            <div style={{borderLeft: '1px solid black', height: '100%', width: '100%', paddingLeft: '20px', paddingTop: '50px', verticalAlign: 'middle'}}>
-              <strong>Miso Token Stats</strong><br/><br/>
-
-              Blocks per Claim: <strong>{blocksPerClaim}</strong><br />
-              Tokens per Claim: <strong>{dailyTokensNo}</strong><br />
-              Tokens per Feed: <strong>{tokensPerFeed}</strong><br />
-            </div>
           </Col>
         </Row>
 
         <Row center='xs'>
           <Col xs={12}>
-            <FeedingChart feedHistory={feedHistory}/>
+            <FeedingChart feedHistory={feedHistory} latestBlockNo={latestBlockNo}/>
           </Col>
         </Row>
       </Grid>

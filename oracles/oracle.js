@@ -31,6 +31,10 @@ contract
     const retValues = JSON.parse(JSON.stringify(res.returnValues))
 
     try {
+      if (retValues.addr === undefined) {
+        return
+      }
+
       if (retValues.addr.toLowerCase() === MonitoringAddress.toLowerCase()) {
         console.log('Feeding time!')
         exec(`python ../hardware/motor.py`)

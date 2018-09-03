@@ -3,6 +3,7 @@ const fs = require('fs')
 const solc = require('solc')
 const compiledPath = path.resolve(__dirname, 'src/compiled_contracts')
 const compiledPath2 = path.resolve(__dirname, '../oracles/compiled_contracts')
+const compiledPath3 = path.resolve(__dirname, '../hardware/compiled_contracts')
 
 const resolveSol = (x) => {
   const contractsPath = path.resolve(__dirname, 'contracts', x)
@@ -12,7 +13,9 @@ const resolveSol = (x) => {
 const writeCompiled = (x, data) => {
   const f = path.resolve(compiledPath, x)
   const f2 = path.resolve(compiledPath2, x)
+  const f3 = path.resolve(compiledPath3, x)
 
+  fs.writeFileSync(f3, data)
   fs.writeFileSync(f2, data)
   fs.writeFileSync(f, data)
 }

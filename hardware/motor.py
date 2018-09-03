@@ -78,4 +78,17 @@ class StepperMotor:
         Steps stepper motor n_degrees
         """
         num_steps = n_degrees / (360.0 / self.steps_per_revolution)
+<<<<<<< HEAD
         self._step(int(num_steps))
+=======
+        self._step(int(num_steps))
+        
+ 
+if __name__ == "__main__":
+    STEP_PIN = 27
+    DIR_PIN = 17
+    
+    sm = StepperMotor(STEP_PIN, DIR_PIN)
+    sm.step_forwards(150) # rotations, 1000 = 2.5 
+    sm.step_backwards(150) # rotations, 1000 = 2.5 
+>>>>>>> 8e912a789ed31b9ceca70f31826d40a96c07ab96
